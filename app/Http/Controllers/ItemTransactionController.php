@@ -15,7 +15,7 @@ class ItemTransactionController extends Controller
      */
     public function index()
     {
-        return view('petugas.item_transaction.index', [
+        return view('Item-Transaction.index', [
             'transactions' => ItemTransaction::with('item', 'petugas')
                 ->latest()
                 ->paginate(20)
@@ -27,7 +27,7 @@ class ItemTransactionController extends Controller
      */
     public function create()
     {
-        return view('petugas.item_transaction.create', [
+        return view('Item-Transaction.create', [
             'items' => Item::with('stock')->get()
         ]);
     }
@@ -80,7 +80,7 @@ class ItemTransactionController extends Controller
      */
     public function show(ItemTransaction $itemTransaction, $id)
     {
-        return view('petugas.item_transaction.show', [
+        return view('Item-Transaction.show', [
             'transaction' => ItemTransaction::with('item', 'petugas')->findOrFail($id)
         ]);
     }
@@ -90,7 +90,7 @@ class ItemTransactionController extends Controller
      */
     public function edit(ItemTransaction $itemTransaction, $id)
     {
-        return view('petugas.item_transaction.edit', [
+        return view('Item-Transaction.edit', [
             'transaction' => ItemTransaction::with('item')->findOrFail($id),
             'items' => Item::with('stock')->get()
         ]);

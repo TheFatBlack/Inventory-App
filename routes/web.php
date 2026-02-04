@@ -35,7 +35,7 @@ Route::middleware(['auth'])->group(function () {
 // =====================================================
 // ADMIN ROUTES - Kelola Admin, Petugas, Pengguna
 // =====================================================
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard Admin
     Route::get('/', [AdminController::class, 'index'])->name('index');
     
@@ -71,6 +71,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::delete('/{id}', [AdminController::class, 'penggunaDestroy'])->name('destroy');
         Route::get('/export-pdf', [AdminController::class, 'penggunaExportPDF'])->name('exportPDF');
     });
+    
+    // Rekap / Reports
+    Route::get('/rekap', [AdminController::class, 'rekapIndex'])->name('rekap.index');
+    Route::get('/rekap/export-pdf', [AdminController::class, 'rekapExportPDF'])->name('rekap.exportPDF');
 });
 
 // =====================================================
@@ -78,7 +82,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 // =====================================================
 Route::middleware(['auth', 'petugas'])->prefix('petugas')->name('petugas.')->group(function () {
     // Dashboard Petugas
-    Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [PetugasController::class, 'dashboard'])->name('dashboard');
     
     // CRUD Item Barang
     Route::prefix('item')->name('item.')->group(function () {

@@ -33,9 +33,9 @@
         <div class="whirly-loader"> </div>
     </div>
     <div class="main-wrapper">
-        @include('template-admin.navbar')
+        @include('template-petugas.navbar')
 
-        @include('template-admin.sidebar')
+        @include('template-petugas.sidebar')
 
         <div class="page-wrapper">
             @yield('content')

@@ -26,6 +26,12 @@
                         <span>Pengguna</span>
                     </a>
                 </li>
+                <li class="{{ ($menu ?? '') == 'rekap' ? 'active' : '' }}">
+                    <a href="{{ route('admin.rekap.index') }}">
+                        <img src="{{ asset('template/assets/img/icons/time.svg') }}" alt="img">
+                        <span>Rekap</span>
+                    </a>
+                </li>
             </ul>
         </div>
     </div>

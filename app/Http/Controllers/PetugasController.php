@@ -5,12 +5,28 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\ItemStock;
 use App\Models\ItemCategory;
+use App\Models\Petugas;
+use App\Models\Pengguna;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class PetugasController extends Controller
 {
+    /**
+     * Dashboard for petugas
+     */
+    public function dashboard()
+    {
+        return view('petugas.index', [
+            'total_admin' => User::where('role', 'admin')->count(),
+            'total_petugas' => Petugas::count(),
+            'total_pengguna' => Pengguna::count(),
+            'total_stock' => ItemStock::sum('stock'),
+            'total_barang' => Item::count(),
+        ]);
+    }
     /**
      * Display a listing of items
      */
@@ -161,4 +177,3 @@ class PetugasController extends Controller
         return redirect()->route('petugas.item.index')->with('success', 'Item berhasil dihapus.');
     }
 }
-

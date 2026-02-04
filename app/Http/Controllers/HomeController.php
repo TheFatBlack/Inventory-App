@@ -20,6 +20,17 @@ class HomeController extends Controller
     // Dashboard
     public function index()
     {
+        $user = Auth::user();
+        $role = strtolower((string) ($user->role ?? ''));
+
+        if ($role === 'petugas') {
+            return redirect()->route('petugas.dashboard');
+        }
+
+        if ($role === 'pengguna') {
+            return redirect()->route('pengguna.dashboard');
+        }
+
         return view('layouts.admin.index', [
             'menu' => 'home',
             'menu_title' => 'home',
@@ -32,7 +43,5 @@ class HomeController extends Controller
             'petugas'  => Petugas::with('user')->get(),
             'pengguna' => Pengguna::with('user')->get()
         ]);
-    }   
-
-    
+    }      
 }

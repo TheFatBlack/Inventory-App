@@ -1,4 +1,4 @@
-@extends('template-admin.home')
+@extends('template-ItemTransaction.home')
 
 @section('content')
 <div class="content">

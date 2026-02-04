@@ -399,7 +399,7 @@ class AdminController extends Controller
             'photo' => $photoPath,
         ]);
 
-        return redirect()->route('layouts.admin.pengguna.index')->with('success', 'Data pengguna berhasil ditambahkan.');
+        return redirect()->route('admin.pengguna.index')->with('success', 'Data pengguna berhasil ditambahkan.');
     }
 
     public function penggunaShow($id)
@@ -503,6 +503,48 @@ class AdminController extends Controller
         
         return view('exports.pengguna-pdf', [
             'pengguna' => $pengguna,
+            'tanggal' => now()->format('d-m-Y H:i:s'),
+        ]);
+    }
+
+    // ============================================
+    // REKAP / REPORTS
+    // ============================================
+    public function rekapIndex()
+    {
+        $items = \App\Models\Item::with(['category','stock'])->get();
+
+        // compute sold qty per item (type 'keluar')
+        foreach ($items as $item) {
+            $sold = \App\Models\ItemTransaction::where('item_id', $item->id)
+                ->where('type', 'keluar')
+                ->sum('quantity');
+            $item->sold_qty = $sold;
+            $item->instock = $item->stock->stock ?? 0;
+        }
+
+        return view('layouts.admin.rekap.index', [
+            'menu' => 'rekap',
+            'items' => $items,
+            'total_barang' => \App\Models\Item::count(),
+        ]);
+    }
+
+    public function rekapExportPDF()
+    {
+        $items = \App\Models\Item::with(['category','stock'])->get();
+
+        // compute sold qty per item (type 'keluar')
+        foreach ($items as $item) {
+            $sold = \App\Models\ItemTransaction::where('item_id', $item->id)
+                ->where('type', 'keluar')
+                ->sum('quantity');
+            $item->sold_qty = $sold;
+            $item->instock = $item->stock->stock ?? 0;
+        }
+        
+        return view('exports.rekap-pdf', [
+            'items' => $items,
             'tanggal' => now()->format('d-m-Y H:i:s'),
         ]);
     }
