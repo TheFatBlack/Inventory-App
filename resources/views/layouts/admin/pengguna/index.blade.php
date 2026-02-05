@@ -91,7 +91,7 @@
                         <tr>
                             <td>{{ $p->user->name ?? $p->name }}</td>
                             <td>{{ $p->user->no_hp ?? $p->no_hp }}</td>
-                            <td>{{ $p->user->role ?? $p->role }}</td>
+                            <td>{{ $p->user->role ?? 'pengguna' }}</td>
                             <td>{{ $p->created_at->format('d-m-Y') }}</td>
                             <td>
                                 <a class="me-3" href="{{ route('admin.pengguna.edit', $p->user_id) }}">
@@ -99,10 +99,10 @@
                                 </a>
 
                                 <form action="{{ route('admin.pengguna.destroy', $p->user_id) }}" method="POST"
-                                    class="d-inline delete-form">
+                                    class="d-inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="me-3 border-0 bg-transparent p-0">
+                                    <button type="submit" class="me-3 border-0 bg-transparent p-0 confirm-text">
                                         <img src="{{ asset('template/assets/img/icons/delete.svg') }}" alt="img">
                                     </button>
                                 </form>
@@ -118,14 +118,4 @@
         </div>
     </div>
 </div>
-<script>
-document.querySelectorAll('.delete-form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault(); // stop submit dulu
-        if (confirm("Yakin ingin menghapus?")) {
-            form.submit(); // baru submit kalau OK
-        }
-    });
-});
-</script>
 @endsection

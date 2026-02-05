@@ -7,6 +7,8 @@ use App\Models\ItemStock;
 use Illuminate\Http\Request;
 use App\Models\ItemTransaction;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Petugas;
+use App\Models\Pengguna;
 
 class ItemTransactionController extends Controller
 {
@@ -15,10 +17,19 @@ class ItemTransactionController extends Controller
      */
     public function index()
     {
-        return view('Item-Transaction.index', [
-            'transactions' => ItemTransaction::with('item', 'petugas')
-                ->latest()
-                ->paginate(20)
+        $query = ItemTransaction::with('item', 'petugas')->latest();
+
+        $user = Auth::user();
+        if ($user && $user->role === 'petugas') {
+            $petugas = Petugas::where('user_id', $user->id)->first();
+            if ($petugas) {
+                $query->where('petugas_id', $petugas->id);
+            }
+        }
+
+        return view('petugas.ItemTransaction.index', [
+            'menu' => 'transaction',
+            'transactions' => $query->paginate(20)
         ]);
     }
 
@@ -27,7 +38,8 @@ class ItemTransactionController extends Controller
      */
     public function create()
     {
-        return view('Item-Transaction.create', [
+        return view('petugas.ItemTransaction.create', [
+            'menu' => 'transaction',
             'items' => Item::with('stock')->get()
         ]);
     }
@@ -47,6 +59,28 @@ class ItemTransactionController extends Controller
 
         $stock = ItemStock::where('item_id', $validated['item_id'])->firstOrFail();
 
+        $user = Auth::user();
+        $petugasId = null;
+        $penggunaId = null;
+
+        if ($user && $user->role === 'petugas') {
+            $petugas = Petugas::where('user_id', $user->id)->first();
+            if (!$petugas) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Data petugas tidak ditemukan untuk user ini.');
+            }
+            $petugasId = $petugas->id;
+        } elseif ($user && $user->role === 'pengguna') {
+            $pengguna = Pengguna::where('user_id', $user->id)->first();
+            if (!$pengguna) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Data pengguna tidak ditemukan untuk user ini.');
+            }
+            $penggunaId = $pengguna->id;
+        }
+
         // Validasi stok jika keluar
         if ($validated['type'] === 'keluar' && $stock->stock < $validated['quantity']) {
             return redirect()->back()
@@ -55,6 +89,10 @@ class ItemTransactionController extends Controller
         }
 
         // Hitung perubahan stok
+        if ($user && $user->role === 'petugas') {
+            $validated['type'] = 'masuk';
+        }
+
         if ($validated['type'] === 'masuk') {
             $stock->increment('stock', $validated['quantity']);
         } else {
@@ -66,7 +104,8 @@ class ItemTransactionController extends Controller
             'item_id' => $validated['item_id'],
             'type' => $validated['type'],
             'quantity' => $validated['quantity'],
-            'petugas_id' => Auth::id(),
+            'petugas_id' => $petugasId,
+            'pengguna_id' => $penggunaId,
             'transaction_date' => $validated['transaction_date'],
             'note' => $validated['note']
         ]);
@@ -80,7 +119,8 @@ class ItemTransactionController extends Controller
      */
     public function show(ItemTransaction $itemTransaction, $id)
     {
-        return view('Item-Transaction.show', [
+        return view('petugas.ItemTransaction.show', [
+            'menu' => 'transaction',
             'transaction' => ItemTransaction::with('item', 'petugas')->findOrFail($id)
         ]);
     }
@@ -90,7 +130,8 @@ class ItemTransactionController extends Controller
      */
     public function edit(ItemTransaction $itemTransaction, $id)
     {
-        return view('Item-Transaction.edit', [
+        return view('petugas.ItemTransaction.edit', [
+            'menu' => 'transaction',
             'transaction' => ItemTransaction::with('item')->findOrFail($id),
             'items' => Item::with('stock')->get()
         ]);

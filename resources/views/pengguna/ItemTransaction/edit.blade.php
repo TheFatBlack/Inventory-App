@@ -1,4 +1,4 @@
-@extends('template-ItemTransaction.home')
+@extends('template-pengguna.home')
 
 @section('content')
 <div class="content">
@@ -10,7 +10,7 @@
 
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('item-transaction.update', $transaction->id) }}" method="POST">
+            <form action="{{ route('pengguna.transaction.update', $transaction->id) }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="row">
@@ -27,8 +27,16 @@
 
                         <div class="form-group">
                             <label for="quantity">Jumlah</label>
-                            <input type="number" name="quantity" id="quantity" class="form-control @error('quantity') is-invalid @enderror"
-                                value="{{ old('quantity', $transaction->quantity) }}" required>
+                            <input
+                                type="number"
+                                name="quantity"
+                                id="quantity"
+                                min="1"
+                                step="1"
+                                class="form-control @error('quantity') is-invalid @enderror"
+                                value="{{ old('quantity', $transaction->quantity) }}"
+                                required
+                            >
                             @error('quantity')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
@@ -55,7 +63,7 @@
 
                         <div class="form-group">
                             <button type="submit" class="btn btn-submit me-2">Update</button>
-                            <a href="{{ route('item-transaction.index') }}" class="btn btn-cancel">Cancel</a>
+                            <a href="{{ route('pengguna.transaction.index') }}" class="btn btn-cancel">Cancel</a>
                         </div>
                     </div>
                 </div>

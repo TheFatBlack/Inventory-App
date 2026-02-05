@@ -1,4 +1,4 @@
-@extends('template-admin.home')
+@extends('template-pengguna.home')
 
 @section('content')
 

@@ -1,4 +1,4 @@
-@extends('template-admin.home')
+@extends('template-petugas.home')
 
 @section('content')
 <div class="content">
@@ -28,17 +28,17 @@
                     </div>
 
                     <div class="form-group">
-                        <a href="{{ route('item-category.edit', $category->id) }}" class="btn btn-warning me-2">
+                        <a href="{{ route('petugas.item-category.edit', $category->id) }}" class="btn btn-warning me-2">
                             <i class="fas fa-edit"></i> Edit
                         </a>
-                        <form action="{{ route('item-category.destroy', $category->id) }}" method="POST" style="display:inline;">
+                        <form action="{{ route('petugas.item-category.destroy', $category->id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger" onclick="return confirm('Yakin ingin menghapus?')">
                                 <i class="fas fa-trash"></i> Hapus
                             </button>
                         </form>
-                        <a href="{{ route('item-category.index') }}" class="btn btn-secondary">Kembali</a>
+                        <a href="{{ route('petugas.item-category.index') }}" class="btn btn-secondary">Kembali</a>
                     </div>
                 </div>
             </div>
@@ -47,3 +47,4 @@
 </div>
 
 @endsection
+

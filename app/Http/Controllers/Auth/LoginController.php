@@ -37,7 +37,7 @@ class LoginController extends Controller
         $role = strtolower((string) $user->role);
 
         if ($role === 'admin') {
-            return '/admin';
+            return '/home';
         }
 
         if ($role === 'petugas') {

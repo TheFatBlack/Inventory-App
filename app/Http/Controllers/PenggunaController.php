@@ -4,22 +4,54 @@ namespace App\Http\Controllers;
 
 use App\Models\ItemTransaction;
 use App\Models\Item;
+use App\Models\ItemStock;
+use App\Models\Pengguna;
+use App\Models\Petugas;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PenggunaController extends Controller
 {
+    /**
+     * Dashboard for pengguna
+     */
+    public function dashboard()
+    {
+        $totalAdmin = User::where('role', 'admin')->count();
+        $totalPetugas = User::where('role', 'petugas')->count();
+        $totalPengguna = User::where('role', 'pengguna')->count();
+
+        return view('pengguna.index', [
+            'menu' => 'home',
+            'total_admin' => $totalAdmin,
+            'total_petugas' => $totalPetugas,
+            'total_pengguna' => $totalPengguna,
+            'total_stock' => ItemStock::sum('stock'),
+            'total_barang' => Item::count(),
+        ]);
+    }
+
     /**
      * Display a listing of user's transactions (taking items from warehouse)
      */
     public function index()
     {
-        $transactions = ItemTransaction::where('pengguna_id', Auth::id())
-            ->with(['item', 'petugas'])
+        $pengguna = Pengguna::where('user_id', Auth::id())->first();
+        if (!$pengguna) {
+            return redirect()->back()
+                ->with('error', 'Data pengguna tidak ditemukan untuk user ini.');
+        }
+
+        $penggunaIds = array_unique([$pengguna->id, Auth::id()]);
+        $transactions = ItemTransaction::whereIn('pengguna_id', $penggunaIds)
+            ->with(['item', 'petugas', 'pengguna'])
             ->orderBy('transaction_date', 'desc')
             ->paginate(10);
 
-        return view('pengguna.transaction.index', [
+        return view('pengguna.ItemTransaction.index', [
+            'menu' => 'transaction',
             'transactions' => $transactions,
         ]);
     }
@@ -31,7 +63,8 @@ class PenggunaController extends Controller
     {
         $items = Item::with('stock')->get();
 
-        return view('pengguna.transaction.create', [
+        return view('pengguna.ItemTransaction.create', [
+            'menu' => 'transaction',
             'items' => $items,
         ]);
     }
@@ -41,6 +74,13 @@ class PenggunaController extends Controller
      */
     public function store(Request $request)
     {
+        $pengguna = Pengguna::where('user_id', Auth::id())->first();
+        if (!$pengguna) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Data pengguna tidak ditemukan untuk user ini.');
+        }
+
         $validated = $request->validate([
             'item_id' => 'required|exists:items,id',
             'quantity' => 'required|integer|min:1',
@@ -59,18 +99,25 @@ class PenggunaController extends Controller
         }
 
         // Create transaction (keluar - decrease stock)
+        $quantity = (int) $validated['quantity'];
+        if ($quantity < 1) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Jumlah wajib diisi minimal 1.');
+        }
+
         $transaction = ItemTransaction::create([
             'item_id' => $validated['item_id'],
-            'pengguna_id' => Auth::id(),
+            'pengguna_id' => $pengguna->id,
             'type' => 'keluar',
-            'quantity' => $validated['quantity'],
+            'quantity' => $quantity,
             'transaction_date' => $validated['transaction_date'],
             'note' => $validated['note'],
         ]);
 
         // Decrease stock
         $stock->update([
-            'stock' => $stock->stock - $validated['quantity']
+            'stock' => $stock->stock - $quantity
         ]);
 
         return redirect()->route('pengguna.transaction.index')->with('success', 'Pengambilan barang berhasil dicatat.');
@@ -81,12 +128,20 @@ class PenggunaController extends Controller
      */
     public function show($id)
     {
-        $transaction = ItemTransaction::with(['item', 'petugas'])
+        $pengguna = Pengguna::where('user_id', Auth::id())->first();
+        if (!$pengguna) {
+            return redirect()->back()
+                ->with('error', 'Data pengguna tidak ditemukan untuk user ini.');
+        }
+
+        $penggunaIds = array_unique([$pengguna->id, Auth::id()]);
+        $transaction = ItemTransaction::with(['item', 'petugas', 'pengguna'])
             ->where('id', $id)
-            ->where('pengguna_id', Auth::id())
+            ->whereIn('pengguna_id', $penggunaIds)
             ->firstOrFail();
 
-        return view('pengguna.transaction.show', [
+        return view('pengguna.ItemTransaction.show', [
+            'menu' => 'transaction',
             'transaction' => $transaction,
         ]);
     }
@@ -96,14 +151,22 @@ class PenggunaController extends Controller
      */
     public function edit($id)
     {
+        $pengguna = Pengguna::where('user_id', Auth::id())->first();
+        if (!$pengguna) {
+            return redirect()->back()
+                ->with('error', 'Data pengguna tidak ditemukan untuk user ini.');
+        }
+
+        $penggunaIds = array_unique([$pengguna->id, Auth::id()]);
         $transaction = ItemTransaction::with('item')
             ->where('id', $id)
-            ->where('pengguna_id', Auth::id())
+            ->whereIn('pengguna_id', $penggunaIds)
             ->firstOrFail();
 
         $items = Item::with('stock')->get();
 
-        return view('pengguna.transaction.edit', [
+        return view('pengguna.ItemTransaction.edit', [
+            'menu' => 'transaction',
             'transaction' => $transaction,
             'items' => $items,
         ]);
@@ -114,8 +177,15 @@ class PenggunaController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $pengguna = Pengguna::where('user_id', Auth::id())->first();
+        if (!$pengguna) {
+            return redirect()->back()
+                ->with('error', 'Data pengguna tidak ditemukan untuk user ini.');
+        }
+
+        $penggunaIds = array_unique([$pengguna->id, Auth::id()]);
         $transaction = ItemTransaction::where('id', $id)
-            ->where('pengguna_id', Auth::id())
+            ->whereIn('pengguna_id', $penggunaIds)
             ->firstOrFail();
 
         $validated = $request->validate([
@@ -126,7 +196,12 @@ class PenggunaController extends Controller
 
         $item = $transaction->item;
         $oldQuantity = $transaction->quantity;
-        $newQuantity = $validated['quantity'];
+        $newQuantity = (int) $validated['quantity'];
+        if ($newQuantity < 1) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Jumlah wajib diisi minimal 1.');
+        }
         $quantityDiff = $newQuantity - $oldQuantity;
 
         $stock = $item->stock;
@@ -161,8 +236,15 @@ class PenggunaController extends Controller
      */
     public function destroy($id)
     {
+        $pengguna = Pengguna::where('user_id', Auth::id())->first();
+        if (!$pengguna) {
+            return redirect()->back()
+                ->with('error', 'Data pengguna tidak ditemukan untuk user ini.');
+        }
+
+        $penggunaIds = array_unique([$pengguna->id, Auth::id()]);
         $transaction = ItemTransaction::where('id', $id)
-            ->where('pengguna_id', Auth::id())
+            ->whereIn('pengguna_id', $penggunaIds)
             ->firstOrFail();
 
         $item = $transaction->item;
@@ -176,5 +258,27 @@ class PenggunaController extends Controller
         $transaction->delete();
 
         return redirect()->route('pengguna.transaction.index')->with('success', 'Transaksi berhasil dihapus.');
+    }
+
+    public function transactionExportPDF()
+    {
+        $pengguna = Pengguna::where('user_id', Auth::id())->first();
+        if (!$pengguna) {
+            return redirect()->back()
+                ->with('error', 'Data pengguna tidak ditemukan untuk user ini.');
+        }
+
+        $penggunaIds = array_unique([$pengguna->id, Auth::id()]);
+        $transactions = ItemTransaction::with(['item', 'petugas', 'pengguna'])
+            ->whereIn('pengguna_id', $penggunaIds)
+            ->orderBy('transaction_date', 'desc')
+            ->get();
+
+        $pdf = Pdf::loadView('exports.pengguna-transactions-pdf', [
+            'transactions' => $transactions,
+            'tanggal' => now()->format('d-m-Y H:i:s'),
+        ]);
+
+        return $pdf->download('pengguna-transactions.pdf');
     }
 }

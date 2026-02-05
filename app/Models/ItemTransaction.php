@@ -9,6 +9,10 @@ class ItemTransaction extends Model
     protected $table = 'item_transactions';
 
     protected $fillable = ['item_id','type','quantity','petugas_id','pengguna_id','transaction_date','note'];
+    
+    protected $casts = [
+        'transaction_date' => 'date',
+    ];
 
     public function item(){ 
         return $this->belongsTo(Item::class,'item_id');

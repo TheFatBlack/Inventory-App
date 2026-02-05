@@ -33,9 +33,9 @@
         <div class="whirly-loader"> </div>
     </div>
     <div class="main-wrapper">
-        @include('template-admin.navbar')
+        @include('template-pengguna.navbar')
 
-        @include('template-admin.sidebar')
+        @include('template-pengguna.sidebar')
 
         <div class="page-wrapper">
             @yield('content')
@@ -65,6 +65,44 @@
     <script src="{{ asset('template/assets/plugins/apexchart/chart-data.js') }}"></script>
 
     <script src="{{ asset('template/assets/js/script.js') }}"></script>
+    <script>
+        // Fallback: ensure loader is hidden even if other scripts fail
+        document.addEventListener('DOMContentLoaded', function () {
+            var loader = document.getElementById('global-loader');
+            if (loader) {
+                loader.style.display = 'none';
+            }
+        });
+    </script>
+    <script>
+        // Ensure SweetAlert confirm blocks form submit until confirmed
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('button.confirm-text');
+            if (!btn) return;
+            var form = btn.closest('form');
+            if (!form) return;
+            e.preventDefault();
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, delete it!",
+                cancelButtonText: "Cancel",
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: "btn btn-primary",
+                    cancelButton: "btn btn-danger ms-2"
+                }
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

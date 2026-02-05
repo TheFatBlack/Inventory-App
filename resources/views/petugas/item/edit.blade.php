@@ -1,4 +1,4 @@
-@extends('template-admin.home')
+@extends('template-petugas.home')
 
 @section('content')
 <div class="content">
@@ -10,7 +10,7 @@
 
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('item.update', $item->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('petugas.item.update', $item->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="row">
@@ -39,6 +39,22 @@
                             <input type="text" name="unit" id="unit" class="form-control @error('unit') is-invalid @enderror"
                                 value="{{ old('unit', $item->unit) }}" required>
                             @error('unit')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label for="stock">Stok Saat Ini</label>
+                            <input
+                                type="number"
+                                name="stock"
+                                id="stock"
+                                min="0"
+                                step="1"
+                                class="form-control @error('stock') is-invalid @enderror"
+                                value="{{ old('stock', $item->stock->stock ?? 0) }}"
+                            >
+                            @error('stock')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
@@ -83,7 +99,7 @@
                             <div class="image-upload image-upload-new">
                                 <input type="file" name="photo" id="photo" accept="image/*" class="@error('photo') is-invalid @enderror">
                                 <div class="image-uploads">
-                                    <img src="assets/img/icons/upload.svg" alt="img">
+                                    <img src="{{ asset('template/assets/img/icons/upload.svg') }}" alt="img">
                                     <h4>Drag and drop a file to upload</h4>
                                 </div>
                             </div>
@@ -96,7 +112,7 @@
 
                 <div class="col-lg-12 mt-3">
                     <button type="submit" class="btn btn-submit me-2">Update</button>
-                    <a href="{{ route('item.index') }}" class="btn btn-cancel">Cancel</a>
+                    <a href="{{ route('petugas.item.index') }}" class="btn btn-cancel">Cancel</a>
                 </div>
             </form>
         </div>
@@ -104,3 +120,4 @@
 </div>
 
 @endsection
+

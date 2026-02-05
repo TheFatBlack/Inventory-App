@@ -52,7 +52,7 @@
                             <span class="status online"></span></span>
                         <div class="profilesets">
                             <h6>{{ auth()->user()->name }}</h6>
-                            <h5>Admin</h5>
+                            <h5>Pengguna</h5>
                         </div>
                     </div>
                     <hr class="m-0">

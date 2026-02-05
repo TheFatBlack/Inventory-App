@@ -6,23 +6,28 @@ use App\Models\Item;
 use App\Models\ItemStock;
 use App\Models\ItemCategory;
 use App\Models\Petugas;
-use App\Models\Pengguna;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PetugasController extends Controller
 {
     /**
      * Dashboard for petugas
      */
-    public function dashboard()
+    public function index()
     {
+        $totalAdmin = User::where('role', 'admin')->count();
+        $totalPetugas = User::where('role', 'petugas')->count();
+        $totalPengguna = User::where('role', 'pengguna')->count();
+
         return view('petugas.index', [
-            'total_admin' => User::where('role', 'admin')->count(),
-            'total_petugas' => Petugas::count(),
-            'total_pengguna' => Pengguna::count(),
+            'menu' => 'home',
+            'total_admin' => $totalAdmin,
+            'total_petugas' => $totalPetugas,
+            'total_pengguna' => $totalPengguna,
             'total_stock' => ItemStock::sum('stock'),
             'total_barang' => Item::count(),
         ]);
@@ -30,16 +35,31 @@ class PetugasController extends Controller
     /**
      * Display a listing of items
      */
-    public function index()
+    public function Itemindex()
     {
-        $items = Item::with(['category', 'stock'])->paginate(10);
+        $items = Item::with(['category', 'stock', 'petugas'])->paginate(10);
 
         return view('petugas.item.index', [
+            'menu' => 'petugas',
             'items' => $items,
             'total_items' => Item::count(),
             'total_stock' => ItemStock::sum('stock'),
             'total_categories' => ItemCategory::count(),
         ]);
+    }
+
+    public function itemExportPDF()
+    {
+        $items = Item::with(['category', 'stock', 'petugas'])
+            ->orderBy('name')
+            ->get();
+
+        $pdf = Pdf::loadView('exports.items-pdf', [
+            'items' => $items,
+            'tanggal' => now()->format('d-m-Y H:i:s'),
+        ]);
+
+        return $pdf->download('items-list.pdf');
     }
 
     /**
@@ -50,6 +70,7 @@ class PetugasController extends Controller
         $categories = ItemCategory::all();
 
         return view('petugas.item.create', [
+            'menu' => 'petugas',
             'categories' => $categories,
         ]);
     }
@@ -65,6 +86,7 @@ class PetugasController extends Controller
             'item_category_id' => 'required|exists:item_categories,id',
             'unit' => 'required',
             'description' => 'nullable',
+            'stock' => 'nullable|integer|min:0',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
@@ -74,6 +96,13 @@ class PetugasController extends Controller
             $photoPath = $request->file('photo')->store('items', 'public');
         }
 
+        $petugas = Petugas::where('user_id', Auth::id())->first();
+        if (!$petugas) {
+            return redirect()->back()
+                ->withErrors(['petugas_id' => 'Data petugas tidak ditemukan untuk user ini.'])
+                ->withInput();
+        }
+
         $item = Item::create([
             'name' => $validated['name'],
             'code' => $validated['code'],
@@ -81,13 +110,14 @@ class PetugasController extends Controller
             'unit' => $validated['unit'],
             'description' => $validated['description'],
             'photo' => $photoPath,
-            'petugas_id' => Auth::id(),
+            'petugas_id' => $petugas->id,
         ]);
 
         // Create default stock record
+        $initialStock = (int) ($validated['stock'] ?? 0);
         ItemStock::create([
             'item_id' => $item->id,
-            'stock' => 0,
+            'stock' => $initialStock,
         ]);
 
         return redirect()->route('petugas.item.index')->with('success', 'Item berhasil ditambahkan.');
@@ -101,6 +131,7 @@ class PetugasController extends Controller
         $item = Item::with(['category', 'stock'])->findOrFail($id);
 
         return view('petugas.item.show', [
+            'menu' => 'petugas',
             'item' => $item,
         ]);
     }
@@ -114,6 +145,7 @@ class PetugasController extends Controller
         $categories = ItemCategory::all();
 
         return view('petugas.item.edit', [
+            'menu' => 'petugas',
             'item' => $item,
             'categories' => $categories,
         ]);
@@ -132,6 +164,7 @@ class PetugasController extends Controller
             'item_category_id' => 'required|exists:item_categories,id',
             'unit' => 'required',
             'description' => 'nullable',
+            'stock' => 'nullable|integer|min:0',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
@@ -152,6 +185,13 @@ class PetugasController extends Controller
         }
 
         $item->update($data);
+
+        if (array_key_exists('stock', $validated)) {
+            ItemStock::updateOrCreate(
+                ['item_id' => $item->id],
+                ['stock' => (int) $validated['stock']]
+            );
+        }
 
         return redirect()->route('petugas.item.show', $item->id)->with('success', 'Item berhasil diupdate.');
     }

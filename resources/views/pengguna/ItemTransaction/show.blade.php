@@ -1,4 +1,4 @@
-@extends('template-ItemTransaction.home')
+@extends('template-pengguna.home')
 
 @section('content')
 <div class="content">
@@ -74,17 +74,17 @@
                     </div>
 
                     <div class="form-group">
-                        <a href="{{ route('item-transaction.edit', $transaction->id) }}" class="btn btn-warning me-2">
+                        <a href="{{ route('pengguna.transaction.edit', $transaction->id) }}" class="btn btn-warning me-2">
                             <i class="fas fa-edit"></i> Edit
                         </a>
-                        <form action="{{ route('item-transaction.destroy', $transaction->id) }}" method="POST" style="display:inline;">
+                        <form action="{{ route('pengguna.transaction.destroy', $transaction->id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger" onclick="return confirm('Yakin ingin menghapus? Stok akan direset ke kondisi sebelumnya.')">
                                 <i class="fas fa-trash"></i> Hapus
                             </button>
                         </form>
-                        <a href="{{ route('item-transaction.index') }}" class="btn btn-secondary">Kembali</a>
+                        <a href="{{ route('pengguna.transaction.index') }}" class="btn btn-secondary">Kembali</a>
                     </div>
                 </div>
             </div>

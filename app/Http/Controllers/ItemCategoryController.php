@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ItemCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ItemCategoryController extends Controller
 {
@@ -13,6 +15,7 @@ class ItemCategoryController extends Controller
     public function index()
     {
         return view('petugas.item_category.index', [
+            'menu' => 'item-category',
             'categories' => ItemCategory::paginate(20)
         ]);
     }
@@ -22,7 +25,9 @@ class ItemCategoryController extends Controller
      */
     public function create()
     {
-        return view('petugas.item_category.create');
+        return view('petugas.item_category.create', [
+            'menu' => 'item-category',
+        ]);
     }
 
     /**
@@ -32,55 +37,89 @@ class ItemCategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|unique:item_categories,name',
-            'description' => 'nullable'
+            'code' => 'nullable|string|max:50|unique:item_categories,code',
+            'description' => 'nullable',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        ItemCategory::create($validated);
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('item-categories', 'public');
+        }
 
-        return redirect()->route('item-category.index')->with('success', 'Kategori item berhasil ditambahkan');
+        ItemCategory::create([
+            'name' => $validated['name'],
+            'code' => $validated['code'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'image' => $imagePath,
+            'created_by' => Auth::user()->name ?? null,
+        ]);
+
+        return redirect()->route('petugas.item-category.index')->with('success', 'Kategori item berhasil ditambahkan');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(ItemCategory $itemCategory, $id)
+    public function show(ItemCategory $itemCategory)
     {
         return view('petugas.item_category.show', [
-            'category' => ItemCategory::findOrFail($id)
+            'menu' => 'item-category',
+            'category' => $itemCategory
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(ItemCategory $itemCategory, $id)
+    public function edit(ItemCategory $itemCategory)
     {
          return view('petugas.item_category.edit', [
-            'category' => ItemCategory::findOrFail($id)
+            'menu' => 'item-category',
+            'category' => $itemCategory
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ItemCategory $itemCategory, $id)
+    public function update(Request $request, ItemCategory $itemCategory)
     {
         $validated = $request->validate([
-            'name' => 'required|unique:item_categories,name,'.$id,
-            'description' => 'nullable'
+            'name' => 'required|unique:item_categories,name,'.$itemCategory->id,
+            'code' => 'nullable|string|max:50|unique:item_categories,code,'.$itemCategory->id,
+            'description' => 'nullable',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        ItemCategory::where('id', $id)->update($validated);
+        $data = [
+            'name' => $validated['name'],
+            'code' => $validated['code'] ?? null,
+            'description' => $validated['description'] ?? null,
+        ];
 
-        return redirect()->route('item-category.index')->with('success', 'Kategori item berhasil diperbarui');
+        if ($request->hasFile('image')) {
+            if ($itemCategory->image && Storage::disk('public')->exists($itemCategory->image)) {
+                Storage::disk('public')->delete($itemCategory->image);
+            }
+            $data['image'] = $request->file('image')->store('item-categories', 'public');
+        }
+
+        $itemCategory->update($data);
+
+        return redirect()->route('petugas.item-category.index')->with('success', 'Kategori item berhasil diperbarui');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ItemCategory $itemCategory, $id)
+    public function destroy(ItemCategory $itemCategory)
     {
-        ItemCategory::destroy($id);
+        if ($itemCategory->image && Storage::disk('public')->exists($itemCategory->image)) {
+            Storage::disk('public')->delete($itemCategory->image);
+        }
+
+        $itemCategory->delete();
         return redirect()->back()->with('success', 'Kategori item berhasil dihapus');
     }
 }

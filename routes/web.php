@@ -82,13 +82,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 // =====================================================
 Route::middleware(['auth', 'petugas'])->prefix('petugas')->name('petugas.')->group(function () {
     // Dashboard Petugas
-    Route::get('/dashboard', [PetugasController::class, 'dashboard'])->name('dashboard');
+    Route::get('/', [PetugasController::class, 'index'])->name('index');
+    Route::get('/home', [PetugasController::class, 'index'])->name('home');
+    Route::get('/dashboard', [PetugasController::class, 'index'])->name('dashboard');
     
     // CRUD Item Barang
     Route::prefix('item')->name('item.')->group(function () {
-        Route::get('/', [PetugasController::class, 'index'])->name('index');
+        Route::get('/', [PetugasController::class, 'Itemindex'])->name('index');
         Route::get('/create', [PetugasController::class, 'create'])->name('create');
         Route::post('/store', [PetugasController::class, 'store'])->name('store');
+        Route::get('/export-pdf', [PetugasController::class, 'itemExportPDF'])->name('exportPDF');
         Route::get('/{id}', [PetugasController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [PetugasController::class, 'edit'])->name('edit');
         Route::put('/{id}', [PetugasController::class, 'update'])->name('update');
@@ -104,16 +107,7 @@ Route::middleware(['auth', 'petugas'])->prefix('petugas')->name('petugas.')->gro
     Route::put('/item-category/{itemCategory}', [ItemCategoryController::class, 'update'])->name('item-category.update');
     Route::delete('/item-category/{itemCategory}', [ItemCategoryController::class, 'destroy'])->name('item-category.destroy');
 
-    // CRUD Transaksi Barang (Masuk/Keluar Gudang)
-    Route::prefix('transaction')->name('transaction.')->group(function () {
-        Route::get('/', [ItemTransactionController::class, 'index'])->name('index');
-        Route::get('/create', [ItemTransactionController::class, 'create'])->name('create');
-        Route::post('/store', [ItemTransactionController::class, 'store'])->name('store');
-        Route::get('/{itemTransaction}', [ItemTransactionController::class, 'show'])->name('show');
-        Route::get('/{itemTransaction}/edit', [ItemTransactionController::class, 'edit'])->name('edit');
-        Route::put('/{itemTransaction}', [ItemTransactionController::class, 'update'])->name('update');
-        Route::delete('/{itemTransaction}', [ItemTransactionController::class, 'destroy'])->name('destroy');
-    });
+    // Transaksi barang hanya untuk pengguna
 });
 
 // =====================================================
@@ -121,14 +115,16 @@ Route::middleware(['auth', 'petugas'])->prefix('petugas')->name('petugas.')->gro
 // =====================================================
 Route::middleware(['auth', 'pengguna'])->prefix('pengguna')->name('pengguna.')->group(function () {
     // Dashboard Pengguna
-    Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+    Route::get('/home', [PenggunaController::class, 'dashboard'])->name('home');
+    Route::get('/dashboard', [PenggunaController::class, 'dashboard'])->name('dashboard');
     
     // Transaksi Pengguna (Ambil Barang - Keluar dari Gudang)
-    Route::get('/transaction', [ItemTransactionController::class, 'index'])->name('transaction.index');
-    Route::get('/transaction/create', [ItemTransactionController::class, 'create'])->name('transaction.create');
-    Route::post('/transaction/store', [ItemTransactionController::class, 'store'])->name('transaction.store');
-    Route::get('/transaction/{itemTransaction}', [ItemTransactionController::class, 'show'])->name('transaction.show');
-    Route::get('/transaction/{itemTransaction}/edit', [ItemTransactionController::class, 'edit'])->name('transaction.edit');
-    Route::put('/transaction/{itemTransaction}', [ItemTransactionController::class, 'update'])->name('transaction.update');
-    Route::delete('/transaction/{itemTransaction}', [ItemTransactionController::class, 'destroy'])->name('transaction.destroy');
+    Route::get('/transaction', [PenggunaController::class, 'index'])->name('transaction.index');
+    Route::get('/transaction/create', [PenggunaController::class, 'create'])->name('transaction.create');
+    Route::post('/transaction/store', [PenggunaController::class, 'store'])->name('transaction.store');
+    Route::get('/transaction/export-pdf', [PenggunaController::class, 'transactionExportPDF'])->name('transaction.exportPDF');
+    Route::get('/transaction/{id}', [PenggunaController::class, 'show'])->name('transaction.show');
+    Route::get('/transaction/{id}/edit', [PenggunaController::class, 'edit'])->name('transaction.edit');
+    Route::put('/transaction/{id}', [PenggunaController::class, 'update'])->name('transaction.update');
+    Route::delete('/transaction/{id}', [PenggunaController::class, 'destroy'])->name('transaction.destroy');
 });

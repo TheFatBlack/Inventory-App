@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminController extends Controller
 {
@@ -18,14 +19,17 @@ class AdminController extends Controller
     public function index()
     {
         $admins = User::where('role', 'admin')->get();
+        $totalAdmin = User::where('role', 'admin')->count();
+        $totalPetugas = User::where('role', 'petugas')->count();
+        $totalPengguna = User::where('role', 'pengguna')->count();
 
         return view('layouts.admin.admin.index', [
             'menu' => 'admin',
             'admins' => $admins,
             'total_barang' => \App\Models\Item::count(),
-            'total_admin' => User::where('role', 'admin')->count(),
-            'total_petugas' => Petugas::count(),
-            'total_pengguna' => Pengguna::count(),
+            'total_admin' => $totalAdmin,
+            'total_petugas' => $totalPetugas,
+            'total_pengguna' => $totalPengguna,
         ]);
     }
 
@@ -158,11 +162,13 @@ class AdminController extends Controller
     public function exportPDF()
     {
         $admins = User::where('role', 'admin')->get();
-        
-        return view('exports.admin-pdf', [
+
+        $pdf = Pdf::loadView('exports.admin-pdf', [
             'admins' => $admins,
             'tanggal' => now()->format('d-m-Y H:i:s'),
         ]);
+
+        return $pdf->download('admin-list.pdf');
     }
 
     // ============================================
@@ -170,15 +176,22 @@ class AdminController extends Controller
     // ============================================
     public function petugasIndex()
     {
-        $petugas = Petugas::with('user')->get();
+        $petugas = Petugas::with('user')
+            ->whereHas('user', function ($q) {
+                $q->where('role', 'petugas');
+            })
+            ->get();
+        $totalAdmin = User::where('role', 'admin')->count();
+        $totalPetugas = User::where('role', 'petugas')->count();
+        $totalPengguna = User::where('role', 'pengguna')->count();
 
         return view('layouts.admin.petugas.index', [
             'menu' => 'petugas',
             'petugas' => $petugas,
             'total_barang' => \App\Models\Item::count(),
-            'total_admin' => User::where('role', 'admin')->count(),
-            'total_petugas' => Petugas::count(),
-            'total_pengguna' => Pengguna::count(),
+            'total_admin' => $totalAdmin,
+            'total_petugas' => $totalPetugas,
+            'total_pengguna' => $totalPengguna,
         ]);
     }
 
@@ -330,11 +343,13 @@ class AdminController extends Controller
     public function petugasExportPDF()
     {
         $petugas = Petugas::with('user')->get();
-        
-        return view('exports.petugas-pdf', [
+
+        $pdf = Pdf::loadView('exports.petugas-pdf', [
             'petugas' => $petugas,
             'tanggal' => now()->format('d-m-Y H:i:s'),
         ]);
+
+        return $pdf->download('petugas-list.pdf');
     }
 
     // ============================================
@@ -342,13 +357,17 @@ class AdminController extends Controller
     // ============================================
     public function penggunaIndex()
     {
-        $pengguna = Pengguna::with('user')->get();
+        $pengguna = Pengguna::with('user')
+            ->whereHas('user', function ($q) {
+                $q->where('role', 'pengguna');
+            })
+            ->get();
 
         return view('layouts.admin.pengguna.index', [
             'menu' => 'pengguna',
             'pengguna' => $pengguna,
             'total_barang' => \App\Models\Item::count(),
-            'total_pengguna' => Pengguna::count(),
+            'total_pengguna' => $pengguna->count(),
         ]);
     }
 
@@ -500,11 +519,13 @@ class AdminController extends Controller
     public function penggunaExportPDF()
     {
         $pengguna = Pengguna::with('user')->get();
-        
-        return view('exports.pengguna-pdf', [
+
+        $pdf = Pdf::loadView('exports.pengguna-pdf', [
             'pengguna' => $pengguna,
             'tanggal' => now()->format('d-m-Y H:i:s'),
         ]);
+
+        return $pdf->download('pengguna-list.pdf');
     }
 
     // ============================================
@@ -543,10 +564,12 @@ class AdminController extends Controller
             $item->instock = $item->stock->stock ?? 0;
         }
         
-        return view('exports.rekap-pdf', [
+        $pdf = Pdf::loadView('exports.rekap-pdf', [
             'items' => $items,
             'tanggal' => now()->format('d-m-Y H:i:s'),
         ]);
+
+        return $pdf->download('rekap-items.pdf');
     }
 }
 
