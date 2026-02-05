@@ -43,7 +43,7 @@
             </div>
         </div>
         <div class="col-lg-3 col-sm-6 col-12 d-flex">
-            <div class="dash-count">
+            <div class="dash-count das3">
                 <div class="dash-counts">
                     <h4>{{$total_stock}}</h4>
                     <h5>Total Stock</h5>
@@ -54,7 +54,7 @@
             </div>
         </div>
         <div class="col-lg-3 col-sm-6 col-12 d-flex">
-            <div class="dash-count das1">
+            <div class="dash-count">
                 <div class="dash-counts">
                     <h4>{{$total_barang}}</h4>
                     <h5>Total Items</h5>
