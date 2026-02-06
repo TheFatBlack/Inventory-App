@@ -11,13 +11,13 @@
                 <li class="{{ request()->routeIs('pengguna.transaction.index') ? 'active' : '' }}">
                     <a href="{{ route('pengguna.transaction.index') }}">
                         <img src="{{ asset('template/assets/img/icons/transfer1.svg') }}" alt="img">
-                        <span>Transaksi Barang</span>
+                        <span>Daftar Pengambilan</span>
                     </a>
                 </li>
                 <li class="{{ request()->routeIs('pengguna.transaction.create') ? 'active' : '' }}">
                     <a href="{{ route('pengguna.transaction.create') }}">
                         <img src="{{ asset('template/assets/img/icons/purchase1.svg') }}" alt="img">
-                        <span>Tambah Transaksi</span>
+                        <span>Pengambilan Barang</span>
                     </a>
                 </li>
             </ul>
